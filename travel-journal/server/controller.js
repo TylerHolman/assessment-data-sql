@@ -1,10 +1,11 @@
 require(`dotenv`).config()
-
 const Sequelize = require(`sequelize`)
-const sequelize = new Sequelize(process.env.CONNECTION_STRING, {
-        dialect: `postgres`,
-        dialectOptions: {
-            ssl:  {
+const {CONNECTION_STRING} = process.env
+
+const sequelize = new Sequelize(CONNECTION_STRING, {
+    dialect: `postgres`,
+    dialectOptions: {
+        ssl:  {
                 rejectUnauthorized: false
             }
         }
@@ -22,10 +23,10 @@ module.exports = {
             );
 
             create table cities (
-                city_id: SERIAL PRIMARY KEY,
-                name: VARCHAR(100),
-                rating: integer,
-                country_id: integer REFERENCES country_id FROM countries
+                city_id SERIAL PRIMARY KEY,
+                name VARCHAR(100),
+                rating integer,
+                country_id integer NOT NULL REFERENCES countries(country_id)
             );
 
             insert into countries (name)
@@ -231,8 +232,30 @@ module.exports = {
     },
     getCountries: (req, res) => {
         sequelize.query(`
-
+            SELECT * FROM countries
         `).then(dbRes => res.status(200).send(dbRes[0])
-        ).catch(err => console.log('error seeding DB', err))
+        ).catch(err => console.log(err))
+    },
+    createCity: (req,res) => {
+        const {name, rating, countryId} = req.body
+        sequelize.query(`
+            INSERT INTO cities (name, rating, country_id)
+            VALUES(${name}, ${rating}, ${countryId})
+        `).then(dbRes => res.status(200).send(dbRes[0])
+        ).catch(err => console.log(err))
+    },
+    getCities: (req,res) => {
+        sequelize.query(`
+            Select ci_city_id, ci.name as city, ci.rating, co country_id, co.name as country
+            FROM cities ci
+            JOIN countries co
+            ON co.country_id = ci.country_id
+        `).then(dbRes => res.status(200).send(dbRes[0])
+        ).catch(err => console.log(err))
+    },
+    deleteCity: (req, res) => {
+        sequelize.query(`
+        
+        `)
     }
 }
